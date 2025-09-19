@@ -1,0 +1,30 @@
+version: "3.9"
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-partsync}
+      POSTGRES_USER: ${POSTGRES_USER:-partsync}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-partsync}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  api:
+    build: ../../apps/api
+    env_file:
+      - ../../.env.local
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+    depends_on:
+      - postgres
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../../data:/app/data
+
+volumes:
+  pgdata:
