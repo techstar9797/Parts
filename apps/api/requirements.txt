@@ -6,5 +6,17 @@ sqlalchemy==2.0.36
 psycopg2-binary==2.9.9
 python-dotenv==1.0.1
 faiss-cpu==1.8.0.post1
+
+# LlamaIndex and LlamaParse
 llama-index==0.11.21
 llama-index-readers-llama-parse==0.3.0
+llama-parse==0.4.0
+llama-index-llms-openai==0.2.0
+llama-index-embeddings-openai==0.2.0
+
+# OpenAI
+openai==1.51.0
+
+# Additional dependencies
+aiofiles==24.1.0
+pathlib==1.0.1
