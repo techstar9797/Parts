@@ -78,11 +78,18 @@ OPENAI_API_KEY="sk-proj-AusFbEqitXgeyymI4lXsYuJ94UoZtcLhFWBXpxD9WHJgBydCk3FyDHHE
 # Mouser API Key (already configured)
 MOUSER_API_KEY="0299a766-72a6-49fa-a1ea-eccfed0e4a04"
 
-# Additional keys needed:
+# LlamaCloud API Key (for LlamaParse + LlamaIndex)
 LLAMA_CLOUD_API_KEY="your_llama_cloud_api_key_here"
+
+# Additional keys (optional for full functionality):
 APIFY_API_TOKEN="your_apify_api_token_here"
 POSTGRES_URL="postgresql://user:password@localhost:5432/partsync"
 ```
+
+### 🤖 **LlamaCloud Integration**
+- **Parse Dashboard**: https://cloud.llamaindex.ai/project/8a7d1bac-ab5e-4fb8-a532-31f350a6f9fe/parse
+- **Extract Dashboard**: https://cloud.llamaindex.ai/project/8a7d1bac-ab5e-4fb8-a532-31f350a6f9fe/extract
+- **Get API Key**: Sign up at [LlamaCloud](https://cloud.llamaindex.ai) and copy your project API key
 
 ## 🎯 Demo Commands
 

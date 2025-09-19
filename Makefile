@@ -20,6 +20,26 @@ api: ## Run API locally (requires local Postgres or Docker)
 web: ## Run Next.js web app
 	cd apps/web && npm run dev
 
+gradio: ## Run Gradio app with LlamaCloud integration
+	python3 final_gradio_app.py
+
+fff-gradio: ## Run FFF Scoring Gradio app
+	python3 fff_gradio_app.py
+
+dynamic-fff: ## Run Dynamic FFF with FAISS default + user override
+	python3 dynamic_fff_gradio.py
+
+enhanced-fff: ## Run Enhanced FFF with Cost & Tariff Analysis
+	python3 enhanced_cost_tariff_fff.py
+
+demo-gradio: ## Run demo Gradio app
+	python3 demo_gradio_app.py
+
+pipeline-demo: ## Run full pipeline demo
+	python3 full_pipeline_demo.py
+
+ui: enhanced-fff ## Alias for Enhanced FFF app
+
 # Data ingestion
 crawl: ## Crawl Mouser for datasheets (requires APIFY_TOKEN)
 	@if [ -z "$(APIFY_TOKEN)" ]; then echo "Error: APIFY_TOKEN not set"; exit 1; fi
