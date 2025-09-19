@@ -998,57 +998,72 @@ def create_replacement_interface():
                     interactive=False
                 )
         
+        # Global state to prevent multiple calls
+        _last_call_time = 0
+        _call_count = 0
+        
         def analyze_replacements(target_mpn, form_w, fit_w, func_w, cost_w, tariff_w):
-            try:
-                logger.info(f"=== ANALYZE REPLACEMENTS START ===")
-                logger.info(f"Target MPN: {target_mpn}")
-                logger.info(f"Weights - Form: {form_w}, Fit: {fit_w}, Func: {func_w}, Cost: {cost_w}, Tariff: {tariff_w}")
+            import time
+            nonlocal _last_call_time, _call_count
+            
+            current_time = time.time()
+            _call_count += 1
+            
+            print(f"=== CALL #{_call_count} - Time: {current_time:.2f} ===", flush=True)
+            print(f"Target MPN: {target_mpn}", flush=True)
+            
+            # Debounce: ignore calls that happen too quickly
+            if current_time - _last_call_time < 1.0:  # 1 second debounce
+                print(f"IGNORING CALL #{_call_count} - Too soon after last call", flush=True)
+                return (
+                    gr.update(),  # No change
+                    gr.update(),  # No change
+                    gr.update(),  # No change
+                    gr.update()   # No change
+                )
+            
+            _last_call_time = current_time
+            
+            # Process the actual request
+            print(f"PROCESSING CALL #{_call_count}", flush=True)
+            
+            # Get the actual target part
+            target = get_part_details(target_mpn)
+            if not target:
+                return (
+                    gr.update(value={"error": f"Part not found: {target_mpn}"}),
+                    gr.update(value=[]),
+                    gr.update(value=f"Error: Part {target_mpn} not found"),
+                    gr.update(value="")
+                )
+            
+            # Get actual replacements
+            replacements = find_replacements(target_mpn, form_w, fit_w, func_w, cost_w, tariff_w)
+            
+            # Format the data
+            display_data = []
+            for rep in replacements:
+                datasheet_url = rep.get("datasheet_url", "")
+                datasheet_link = f"[📄 Datasheet]({datasheet_url})" if datasheet_url else "No datasheet"
                 
-                # Get target details
-                target = get_part_details(target_mpn)
-                if not target:
-                    logger.warning(f"No target found for: {target_mpn}")
-                    return gr.update(value={}), gr.update(value=[]), gr.update(value="No target found"), gr.update(value="")
-                
-                logger.info(f"Found target: {target['mpn']} - {target['manufacturer']}")
-                
-                # Find replacements
-                replacements = find_replacements(target_mpn, form_w, fit_w, func_w, cost_w, tariff_w)
-                logger.info(f"Found {len(replacements)} replacements")
-                
-                if not replacements:
-                    logger.warning("No replacements found")
-                    return gr.update(value=target), gr.update(value=[]), gr.update(value="No replacements found"), gr.update(value="")
-                
-                # Format replacement data
-                display_data = []
-                logger.info(f"Formatting {len(replacements)} replacements...")
-                for i, rep in enumerate(replacements):
-                    logger.info(f"Processing replacement {i+1}: {rep['mpn']} (Score: {rep.get('total_score', 'N/A')})")
-                    # Create clickable datasheet link
-                    datasheet_url = rep.get("datasheet_url", "")
-                    datasheet_link = f"[📄 Datasheet]({datasheet_url})" if datasheet_url else "No datasheet"
-                    
-                    display_data.append([
-                        rep["mpn"],
-                        rep["manufacturer"],
-                        f"{rep['total_score']:.3f}",
-                        f"{rep['form_score']:.2f}",
-                        f"{rep['fit_score']:.2f}",
-                        f"{rep['func_score']:.2f}",
-                        f"{rep['cost_score']:.2f}",
-                        f"{rep['tariff_score']:.2f}",
-                        datasheet_link,
-                        False  # Select checkbox
-                    ])
-                
-                logger.info(f"Formatted {len(display_data)} display items")
-                
-                # Generate FFF Analysis with datasheet link
-                datasheet_url = target.get("datasheet_url", "")
-                datasheet_link = f"[📄 View Datasheet]({datasheet_url})" if datasheet_url else "No datasheet available"
-                
-                fff_text = f"""TARGET PART: {target['mpn']} ({target['manufacturer']})
+                display_data.append([
+                    rep["mpn"],
+                    rep["manufacturer"],
+                    f"{rep['total_score']:.3f}",
+                    f"{rep['form_score']:.2f}",
+                    f"{rep['fit_score']:.2f}",
+                    f"{rep['func_score']:.2f}",
+                    f"{rep['cost_score']:.2f}",
+                    f"{rep['tariff_score']:.2f}",
+                    datasheet_link,
+                    False
+                ])
+            
+            # Generate analysis text
+            datasheet_url = target.get("datasheet_url", "")
+            datasheet_link = f"[📄 View Datasheet]({datasheet_url})" if datasheet_url else "No datasheet"
+            
+            fff_text = f"""TARGET PART: {target['mpn']} ({target['manufacturer']})
 {datasheet_link}
 
 FORM ANALYSIS:
@@ -1069,9 +1084,8 @@ RECOMMENDATION:
 Based on weighted analysis (Form: {form_w}, Fit: {fit_w}, Function: {func_w}, Cost: {cost_w}, Tariff: {tariff_w}):
 - Best match: {replacements[0]['mpn']} (Score: {replacements[0]['total_score']:.3f})
 - Alternative: {replacements[1]['mpn']} (Score: {replacements[1]['total_score']:.3f})"""
-                
-                # Generate Provenance
-                provenance_text = f"""DATA SOURCES & PROVENANCE:
+            
+            provenance_text = f"""DATA SOURCES & PROVENANCE:
 
 TARGET PART SOURCES:
 {chr(10).join([f"- {p}" for p in target['provenance']])}
@@ -1081,50 +1095,25 @@ REPLACEMENT CANDIDATES SOURCES:
 
 LLAMACLOUD INTEGRATION CONFIRMED:
 ✅ LlamaParse: PDF datasheet extraction
-   - API Key: llx-6svmdOoLPRrQtW27NDxOXI8roJgrWymewmPSNf585xSNoktG
-   - Endpoint: /v1/parsing/parse
-   - Status: Active
-
 ✅ LlamaExtract: Structured data extraction
-   - API Key: llx-6svmdOoLPRrQtW27NDxOXI8roJgrWymewmPSNf585xSNoktG
-   - Endpoint: /v1/extraction/extract
-   - Schema: PartRecordPS
-   - Status: Active
-
 ✅ LlamaCloud: AI-powered analysis
-   - API Key: llx-6svmdOoLPRrQtW27NDxOXI8roJgrWymewmPSNf585xSNoktG
-   - Endpoint: /v1/cloud/process
-   - Processing: FFF analysis with provenance
-   - Status: Active
-
 ✅ Mouser API: Real-time pricing & stock data
-   - API Key: 854242ca-2ab5-4a64-8411-81aa59e3fca8
-   - Status: Active
 
 CONFIDENCE LEVELS:
-- Form Analysis: 95% (Package matching via LlamaParse)
-- Fit Analysis: 90% (Electrical specs via LlamaExtract)
-- Function Analysis: 85% (Performance attributes via LlamaCloud)
-- Cost Analysis: 100% (Real-time Mouser API data)
-- Tariff Analysis: 100% (HTS database integration)"""
-                
-                logger.info(f"=== RETURNING DATA ===")
-                logger.info(f"Target: {target['mpn']}")
-                logger.info(f"Display data rows: {len(display_data)}")
-                logger.info(f"FFF text length: {len(fff_text)}")
-                logger.info(f"Provenance text length: {len(provenance_text)}")
-                
-                return (gr.update(value=target), 
-                       gr.update(value=display_data), 
-                       gr.update(value=fff_text),
-                       gr.update(value=provenance_text))
+- Form Analysis: 95% (Package matching)
+- Fit Analysis: 90% (Electrical specs)
+- Function Analysis: 85% (Performance attributes)
+- Cost Analysis: 100% (Real-time data)
+- Tariff Analysis: 100% (Database integration)"""
             
-            except Exception as e:
-                logger.error(f"Error in analyze_replacements: {e}")
-                return (gr.update(value={}), 
-                       gr.update(value=[]), 
-                       gr.update(value=f"Error: {str(e)}"),
-                       gr.update(value=""))
+            print(f"RETURNING DATA FOR CALL #{_call_count}", flush=True)
+            
+            return (
+                gr.update(value=target),
+                gr.update(value=display_data),
+                gr.update(value=fff_text),
+                gr.update(value=provenance_text)
+            )
         
         def analyze_selected_replacement(selected_data):
             """Analyze selected replacement part as the new target"""
@@ -1236,15 +1225,13 @@ CONFIDENCE LEVELS:
         analyze_btn.click(
             analyze_replacements,
             inputs=[target_input, form_slider, fit_slider, func_slider, cost_slider, tariff_slider],
-            outputs=[target_details, replacement_results, fff_analysis, provenance_display]
+            outputs=[target_details, replacement_results, fff_analysis, provenance_display],
+            api_name=False,
+            queue=False
         )
         
-        # Add change event for replacement results to analyze selected substitute
-        replacement_results.change(
-            analyze_selected_replacement,
-            inputs=[replacement_results],
-            outputs=[target_details, replacement_results, fff_analysis, provenance_display]
-        )
+        # Note: Removed the change event to prevent reactive loops
+        # Users can manually select and analyze replacement parts if needed
 
 def create_pipeline_interface():
     """Create the pipeline steps interface"""
@@ -1544,4 +1531,9 @@ def create_app():
 
 if __name__ == "__main__":
     app = create_app()
-    app.launch(server_port=7875, share=False)
+    app.launch(
+        server_port=7877, 
+        share=False,
+        show_error=True,
+        debug=False
+    )
