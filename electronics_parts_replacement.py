@@ -9,12 +9,13 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-# API configuration
-LLAMA_CLOUD_API_KEY = "llx-6svmdOoLPRrQtW27NDxOXI8roJgrWymewmPSNf585xSNoktG"
+# API configuration - Load from environment variables for security
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "your_openai_api_key_here")
+LLAMA_CLOUD_API_KEY = os.getenv("LLAMA_CLOUD_API_KEY", "your_llama_cloud_api_key_here")
 LLAMA_CLOUD_BASE_URL = "https://api.llamaindex.ai"
-APIFY_API_TOKEN = "apify_api_GAaA74czHT1GOHcedN5xLQALxCEe1D4bJK28"
+APIFY_API_TOKEN = os.getenv("APIFY_API_TOKEN", "your_apify_api_token_here")
 APIFY_ACTOR_ID = "aYG0l9s7dbB7j3gbS"
-MOUSER_API_KEY = "854242ca-2ab5-4a64-8411-81aa59e3fca8"
+MOUSER_API_KEY = os.getenv("MOUSER_API_KEY", "your_mouser_api_key_here")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

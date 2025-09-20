@@ -16,12 +16,24 @@ from dotenv import load_dotenv
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# API configuration
-LLAMA_CLOUD_API_KEY = "llx-6svmdOoLPRrQtW27NDxOXI8roJgrWymewmPSNf585xSNoktG"
+# API configuration - Load from environment variables for security
+# Load API keys from environment variables (secure approach)
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+LLAMA_CLOUD_API_KEY = os.getenv("LLAMA_CLOUD_API_KEY") 
 LLAMA_CLOUD_BASE_URL = "https://api.llamaindex.ai"
-APIFY_API_TOKEN = "apify_api_GAaA74czHT1GOHcedN5xLQALxCEe1D4bJK28"
+APIFY_API_TOKEN = os.getenv("APIFY_API_TOKEN")
 APIFY_ACTOR_ID = "aYG0l9s7dbB7j3gbS"
-MOUSER_API_KEY = "854242ca-2ab5-4a64-8411-81aa59e3fca8"
+MOUSER_API_KEY = os.getenv("MOUSER_API_KEY")
+
+# Validate API keys are present
+if not OPENAI_API_KEY:
+    logger.warning("⚠️  OPENAI_API_KEY not found in environment variables")
+if not LLAMA_CLOUD_API_KEY:
+    logger.warning("⚠️  LLAMA_CLOUD_API_KEY not found in environment variables") 
+if not APIFY_API_TOKEN:
+    logger.warning("⚠️  APIFY_API_TOKEN not found in environment variables")
+if not MOUSER_API_KEY:
+    logger.warning("⚠️  MOUSER_API_KEY not found in environment variables")
 
 # Mock parts database with comprehensive electronic components
 MOCK_PARTS = [
